@@ -1,0 +1,3 @@
+{"customer_name":"dany","customer_email":"d@gmail.com","cart":[{"id":23,"name":"beer","details":"esrdtfgyhuijkmotfghij","price":5500,"preparing_time":1,"image":"http://localhost/../admin/menu/uploads/products/uploads/products/beer-1733616538.png","raw_image":"uploads/products/beer-1733616538.png","category_name":"NON VEGETARIAN","subcategory_name":"PORK","quantity":1},{"id":22,"name":"imiteja","details":"zdxcfgvbhnjkml","price":5500,"preparing_time":9,"image":"http://localhost/../admin/menu/uploads/products/uploads/products/6754e31d45013.jpeg","raw_image":"uploads/products/6754e31d45013.jpeg","category_name":"vegetarian","subcategory_name":"BEEF","quantity":1}]}
+
+Transaction started

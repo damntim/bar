@@ -9,7 +9,7 @@
                 <a href="../admin/dashboard.php" class="block px-4 py-2 mt-2 text-sm rounded-lg bg-gray-700">
                     <i class="fas fa-home mr-2"></i> Dashboard
                 </a>
-                <a href="#" class="block px-4 py-2 mt-2 text-sm hover:bg-gray-700 rounded-lg">
+                <a href="../admin/inventory.php" class="block px-4 py-2 mt-2 text-sm hover:bg-gray-700 rounded-lg">
                     <i class="fas fa-warehouse mr-2"></i> Inventory
                 </a>
                 <a href="../menu/menu.php" class="block px-4 py-2 mt-2 text-sm hover:bg-gray-700 rounded-lg">

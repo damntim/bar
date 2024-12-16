@@ -20,7 +20,7 @@ $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Fetch form data
     if (isset($_POST['add_product'])) {
-        echo("<script>alert('ddddddddd')</script>"); 
+        // echo("<script>alert('ddddddddd')</script>"); 
     $name = $_POST['name'];
     $details = $_POST['details'] ?? null;
     $beginning_stock_quantity = (int)$_POST['beginning_stock_quantity'];
@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $expiry_date = $_POST['expiry_date'];
     $collection_size = $_POST['collection_size'] ?? '1';
     $image = $_FILES['image'];
+    $purchasing_price=$_POST["purchasing_price"];
 
     if($collection_size==null || $collection_size==""){
         $collection_size=1;
@@ -71,9 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // Insert into stock_transactions
-                $stmt = $pdo->prepare("INSERT INTO stock_transactions (product_id, transaction_type, unit_quantity, total_items, remain_quantity) 
-                                       VALUES (?, 'in', ?, ?, ?)");
-                $stmt->execute([$product_id, $beginning_stock_quantity, $total_items, $remain_quantity]);
+                $stmt = $pdo->prepare("INSERT INTO stock_transactions (product_id, transaction_type, unit_quantity, total_items, remain_quantity,purchasing_price) 
+                                       VALUES (?, 'in', ?, ?, ?,?)");
+                $stmt->execute([$product_id, $beginning_stock_quantity, $total_items, $remain_quantity,$purchasing_price]);
 
                 $pdo->commit();
                 $message = 'Product and stock transaction added successfully!';
@@ -96,6 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantity = (int)$_POST['quantity'];
     $store_type=$_POST['storet_ype'];
     $collection_size=$_POST['collection_size'];
+    $purchasing_price=$_POST["purchasing_price"];
     
 
 
@@ -120,7 +122,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // echo("<script>alert('" . addslashes($collection_size) . "')</script>");  
 
         } elseif ($action === 'out') {
-            // $new_remaining_quantity = max(0, $last_remaining_quantity - $quantity);
+            $total_items  = $quantity;
+            $new_remaining_quantity = max(0, $last_remaining_quantity - $quantity);
+
         } else {
             $message = 'Invalid action!';
             return;
@@ -128,8 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Insert the stock transaction
         $stmt = $pdo->prepare("
-            INSERT INTO stock_transactions (product_id, transaction_type, unit_quantity, remain_quantity,total_items) 
-            VALUES (:product_id, :transaction_type, :unit_quantity, :remain_quantity,:total_items)
+            INSERT INTO stock_transactions (product_id, transaction_type, unit_quantity, remain_quantity,total_items,purchasing_price) 
+            VALUES (:product_id, :transaction_type, :unit_quantity, :remain_quantity,:total_items,:purchasing_price)
         ");
         $stmt->execute([
             'product_id' => $product_id,
@@ -137,6 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'unit_quantity' => $quantity,
             'remain_quantity' => $new_remaining_quantity,
             'total_items'=>$total_items,
+            'purchasing_price'=>$purchasing_price,
         ]);
 
         $message = 'Stock transaction recorded successfully!';
@@ -233,8 +238,10 @@ $total_pages = ceil($total_records / $records_per_page);
    data-store-type="<?php echo htmlspecialchars($product['store_type']); ?>" 
    data-collection-size="<?php echo htmlspecialchars($product['collection_size'] ?? ''); ?>">Stock</a>
  |
-            <a href="#" class="text-blue-800">Details</a> |
-            <a href="#" class="text-red-600">Delete</a>
+ <a href="details.php?id=<?php echo $product['id']; ?>" class="text-blue-800">Details</a>  |
+ <a href="#" 
+       onclick="confirmDelete('<?php echo $product['id']; ?>', '<?php echo htmlspecialchars($product['name']); ?>')" 
+       class="text-red-600">Delete</a>
         </td>
     </tr>
     <?php endforeach; ?>
@@ -302,6 +309,10 @@ $total_pages = ceil($total_records / $records_per_page);
                 <label for="quantity_alert" class="block text-sm font-medium">Quantity Alert</label>
                 <input type="number" name="quantity_alert" id="quantity_alert" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
             </div>
+            <div>
+                <label for="purcasing_price" class="block text-sm font-medium">Purchasing price</label>
+                <input type="number" name="purchasing_price" id="purchasing_price" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+            </div>
         </div>
         <button type="submit" name="add_product" class="mt-4 bg-green-800 text-white px-4 py-2 rounded">Add Product</button>
     </form>
@@ -324,10 +335,14 @@ $total_pages = ceil($total_records / $records_per_page);
                 <option value="out">Stock Out</option>
             </select>
         </div>
-        <div id="quantity-field" class="hidden mt-4">
+        <div id="quantity-field" class=" mt-4">
             <label for="quantity" class="block text-sm font-medium">Quantity</label>
             <input type="number" name="quantity" id="quantity" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
         </div>
+        <div>
+                <label for="purcasing_price" class="block text-sm font-medium">Purchasing price</label>
+                <input type="number" name="purchasing_price" id="purchasing_price" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+            </div>
         <div class="mt-4">
             <button type="submit" name="manage_stock" class="bg-blue-800 text-white px-4 py-2 rounded">Submit</button>
             <button type="button" id="back-to-product-form" class="ml-2 bg-gray-500 text-white px-4 py-2 rounded">Back</button>
@@ -388,6 +403,22 @@ $total_pages = ceil($total_records / $records_per_page);
             expirationField.classList.add('hidden');
         }
     });
+
+        // Toggle Collection Fields
+        document.getElementById('store_type').addEventListener('change', function () {
+        const collectionFields = document.getElementById('collection_fields');
+        if (this.value === 'collection') {
+            collectionFields.classList.remove('hidden');
+        } else {
+            collectionFields.classList.add('hidden');
+        }
+    })
+    function confirmDelete(productId, productName) {
+    if (confirm('Are you sure you want to delete the product "' + productName + '"?')) {
+        // Redirect to the delete.php file with the product ID
+        window.location.href = 'delete.php?id=' + productId;
+    }
+}
 </script>
 
 
